@@ -7,9 +7,7 @@ import 'package:meals_app/models/screens/tabs_screen.dart';
 import 'package:meals_app/models/screens/filters_screen.dart';
 import 'package:meals_app/models/meal.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
   @override
@@ -23,12 +21,13 @@ class _MyAppState extends State<MyApp> {
     'vegan': false,
     'vegetarian': false,
   };
-
   List<Meal> _availableMeals = DUMMY_MEALS;
+  List<Meal> _favoriteMeals = [];
 
   void _setFilters(Map<String, bool> filterData) {
     setState(() {
       _filters = filterData;
+
       _availableMeals = DUMMY_MEALS.where((meal) {
         if (_filters['gluten'] == true && !meal.isGlutenFree) {
           return false;
@@ -39,12 +38,32 @@ class _MyAppState extends State<MyApp> {
         if (_filters['vegan'] == true && !meal.isVegan) {
           return false;
         }
-        if (_filters['vegetarin'] == true && !meal.isVegetarian) {
+        if (_filters['vegetarian'] == true && !meal.isVegetarian) {
           return false;
         }
         return true;
       }).toList();
     });
+  }
+
+  void _toggleFavorite(String mealId) {
+    final existingIndex =
+        _favoriteMeals.indexWhere((meal) => meal.id == mealId);
+    if (existingIndex >= 0) {
+      setState(() {
+        _favoriteMeals.removeAt(existingIndex);
+      });
+    } else {
+      setState(() {
+        _favoriteMeals.add(
+          DUMMY_MEALS.firstWhere((meal) => meal.id == mealId),
+        );
+      });
+    }
+  }
+
+  bool _isMealFavorite(String id) {
+    return _favoriteMeals.any((meal) => meal.id == id);
   }
 
   @override
@@ -54,7 +73,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         primarySwatch: Colors.pink,
         accentColor: Colors.amber,
-        //canvasColor: Color.fromARGB(255, 254, 229, 1),
+        canvasColor: Color.fromRGBO(255, 254, 229, 1),
         fontFamily: 'Raleway',
         textTheme: ThemeData.light().textTheme.copyWith(
             body1: TextStyle(
@@ -69,25 +88,24 @@ class _MyAppState extends State<MyApp> {
               fontWeight: FontWeight.bold,
             )),
       ),
-      //home: CategoriesScreen(),
-      initialRoute: '/',
+      // home: CategoriesScreen(),
+      initialRoute: '/', // default is '/'
       routes: {
-        '/': (ctx) => TabsScreen(),
+        '/': (ctx) => TabsScreen(_favoriteMeals),
         CategoryMealsScreen.routeName: (ctx) =>
             CategoryMealsScreen(_availableMeals),
-        MealDetailScreen.routeName: (ctx) => MealDetailScreen(),
+        MealDetailScreen.routeName: (ctx) =>
+            MealDetailScreen(_toggleFavorite, _isMealFavorite),
         FiltersScreen.routeName: (ctx) => FiltersScreen(_filters, _setFilters),
       },
       onGenerateRoute: (settings) {
         print(settings.arguments);
-        //   if (settings.name  == '/meal-detail') {
-        //     return ...;
-        //   } elseif (settings.name == '/something-else') {
-        //     return ...;
-        //   }
-        //   return MaterialPageRoute(
-        //     builder: (ctx) => CategoriesScreen(),
-        //   );
+        // if (settings.name == '/meal-detail') {
+        //   return ...;
+        // } else if (settings.name == '/something-else') {
+        //   return ...;
+        // }
+        // return MaterialPageRoute(builder: (ctx) => CategoriesScreen(),);
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
